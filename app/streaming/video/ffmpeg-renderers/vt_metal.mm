@@ -334,11 +334,13 @@ public:
             // Free any unpresented drawable since we're changing pixel formats
             discardNextDrawable();
 
+            const char* cscName = "Bt601Lim";
             switch (colorspace) {
             case COLORSPACE_REC_709:
                 m_MetalLayer.colorspace = newColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_709);
                 m_MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
                 paramBuffer.cscParams = (fullRange ? k_CscParams_Bt709Full : k_CscParams_Bt709Lim);
+                cscName = fullRange ? "Bt709Full" : "Bt709Lim";
                 break;
             case COLORSPACE_REC_2020:
                 // https://developer.apple.com/documentation/metal/hdr_content/using_color_spaces_to_display_hdr_content
@@ -351,14 +353,35 @@ public:
                     m_MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
                 }
                 paramBuffer.cscParams = (fullRange ? k_CscParams_Bt2020Full : k_CscParams_Bt2020Lim);
+                cscName = fullRange ? "Bt2020Full" : "Bt2020Lim";
                 break;
             default:
             case COLORSPACE_REC_601:
                 m_MetalLayer.colorspace = newColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
                 m_MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
                 paramBuffer.cscParams = (fullRange ? k_CscParams_Bt601Full : k_CscParams_Bt601Lim);
+                cscName = fullRange ? "Bt601Full" : "Bt601Lim";
                 break;
             }
+
+            OSType cvFourcc = 0;
+            if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX && frame->data[3] != nullptr) {
+                CVPixelBufferRef pixBuf = reinterpret_cast<CVPixelBufferRef>(frame->data[3]);
+                cvFourcc = CVPixelBufferGetPixelFormatType(pixBuf);
+            }
+
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                        "VTMetal color diag: mapped=%d fullRange=%d "
+                        "av.colorspace=%d av.range=%d av.primaries=%d av.trc=%d "
+                        "cvFourcc=0x%08x csc=%s",
+                        colorspace,
+                        fullRange ? 1 : 0,
+                        (int)frame->colorspace,
+                        (int)frame->color_range,
+                        (int)frame->color_primaries,
+                        (int)frame->color_trc,
+                        (unsigned)cvFourcc,
+                        cscName);
 
             paramBuffer.bitnessScaleFactor = getBitnessScaleFactor(frame);
 

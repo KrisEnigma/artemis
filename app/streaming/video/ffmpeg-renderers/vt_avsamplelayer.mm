@@ -297,23 +297,41 @@ public:
                 m_ColorSpace = nullptr;
             }
 
+            const char* spaceName = "Rec601/sRGB";
             switch (colorspace) {
             case COLORSPACE_REC_709:
                 m_ColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_709);
+                spaceName = "ITUR_709";
                 break;
             case COLORSPACE_REC_2020:
                 // This is necessary to ensure HDR works properly with external displays on macOS Sonoma.
                 if (frame->color_trc == AVCOL_TRC_SMPTE2084) {
                     m_ColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+                    spaceName = "ITUR_2100_PQ";
                 }
                 else {
                     m_ColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2020);
+                    spaceName = "ITUR_2020";
                 }
                 break;
             case COLORSPACE_REC_601:
                 m_ColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+                spaceName = "sRGB";
                 break;
             }
+
+            SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION,
+                        "VTAVSample color diag: mapped=%d fullRange=%d "
+                        "av.colorspace=%d av.range=%d av.primaries=%d av.trc=%d "
+                        "cvFourcc=0x%08x cg=%s",
+                        colorspace,
+                        isFrameFullRange(frame) ? 1 : 0,
+                        (int)frame->colorspace,
+                        (int)frame->color_range,
+                        (int)frame->color_primaries,
+                        (int)frame->color_trc,
+                        (unsigned)CVPixelBufferGetPixelFormatType(pixBuf),
+                        spaceName);
 
             m_LastColorSpace = colorspace;
         }
