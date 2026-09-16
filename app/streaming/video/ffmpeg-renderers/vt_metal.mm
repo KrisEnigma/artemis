@@ -625,6 +625,9 @@ public:
 
                 [renderEncoder setRenderPipelineState:m_OverlayPipelineState];
                 [renderEncoder setFragmentTexture:overlayTexture atIndex:0];
+                // SDR sRGB layer makes UI glyphs look dim vs the PQ/EDR HDR path; lift them.
+                float overlayGain = (m_MetalLayer.pixelFormat == MTLPixelFormatBGR10A2Unorm) ? 1.0f : 2.25f;
+                [renderEncoder setFragmentBytes:&overlayGain length:sizeof(overlayGain) atIndex:0];
                 [renderEncoder setVertexBytes:verts length:sizeof(verts) atIndex:0];
                 [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:SDL_arraysize(verts)];
 
