@@ -855,8 +855,9 @@ public:
 
     int getDecoderColorspace() override
     {
-        // macOS seems to handle Rec 601 best
-        return COLORSPACE_REC_601;
+        // HD GameStream SDR uses Rec.709. Frame VUI still wins via getFrameColorspace()
+        // when FFmpeg supplies it; this is only the request/fallback colorspace.
+        return COLORSPACE_REC_709;
     }
 
     int getDecoderCapabilities() override
