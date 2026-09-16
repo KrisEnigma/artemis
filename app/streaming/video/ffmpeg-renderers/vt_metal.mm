@@ -336,7 +336,10 @@ public:
 
             switch (colorspace) {
             case COLORSPACE_REC_709:
-                m_MetalLayer.colorspace = newColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_709);
+                // Tag the Metal layer as sRGB, not ITUR_709. The fragment shader already
+                // applies Bt.709 limited/full CSC into display RGB; marking the layer as
+                // ITUR_709 caused washed-out SDR on ProMotion vs native Punktfunk.
+                m_MetalLayer.colorspace = newColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
                 m_MetalLayer.pixelFormat = MTLPixelFormatBGRA8Unorm;
                 paramBuffer.cscParams = (fullRange ? k_CscParams_Bt709Full : k_CscParams_Bt709Lim);
                 break;
